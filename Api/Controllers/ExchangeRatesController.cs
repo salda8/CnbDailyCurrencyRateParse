@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace CurrencyRate.Controllers
 {
     [Route("api/[controller]")]
-    public class ValuesController : Controller
+    public class ExchangeRatesController : Controller
     {
         // GET api/values
         [HttpGet]
