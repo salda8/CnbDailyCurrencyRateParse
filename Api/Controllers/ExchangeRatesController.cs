@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using CurrencyRate.DataStructures.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CurrencyRate.Controllers
@@ -9,38 +6,41 @@ namespace CurrencyRate.Controllers
     [Route("api/[controller]")]
     public class ExchangeRatesController : Controller
     {
-        // GET api/values
+        private readonly IExchangeRateSl exchangeRate;
+
+        public ExchangeRatesController(IExchangeRateSl exchangeRate)
+        {
+            this.exchangeRate = exchangeRate;
+        }
+
+        // PATCH api/ExchangeRates
+        [HttpPatch()]
+        public IActionResult DownloadNewExchangeRates()
+        {
+            exchangeRate.DownloadNewExchangeRates();
+            return NoContent();
+        }
+
+        // GET api/ExchangeRates/download
+        [HttpGet()]
+        [Route("download")]
+        [ResponseCache(Duration=60)]
+        public IActionResult Get()
+        {
+            return Ok(exchangeRate.GetExchangeRates());
+        }
+
+        // GET api/ExchangeRates
         [HttpGet]
-        public List<ExchangeRate> Get()
+        [ResponseCache(Duration=60, VaryByQueryKeys = new string[]{"zdrojovaMena", "ciloveMena", "mnozstvi"})]
+        public IActionResult Get([FromQuery(Name = "zdrojovaMena")]string sourceCurrency, [FromQuery(Name = "cilovaMena")]string targetCurrency, [FromQuery(Name = "mnozstvi")]int amount)
         {
-           return new ExchangeRateRepository().Get();
+            if (string.IsNullOrWhiteSpace(sourceCurrency) || string.IsNullOrWhiteSpace(targetCurrency) || amount == 0)
+            {
+                return BadRequest();
+            }
 
-            
-        }
-
-        // GET api/values/5
-        [HttpGet("{id}")]
-        public string Get(int id)
-        {
-            return "value";
-        }
-
-        // POST api/values
-        [HttpPost]
-        public void Post([FromBody]string value)
-        {
-        }
-
-        // PUT api/values/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody]string value)
-        {
-        }
-
-        // DELETE api/values/5
-        [HttpDelete("{id}")]
-        public void Delete(int id)
-        {
+            return Ok(exchangeRate.ExchangeCurrency(sourceCurrency, targetCurrency, amount));
         }
     }
 }
